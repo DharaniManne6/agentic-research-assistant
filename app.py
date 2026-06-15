@@ -3,7 +3,18 @@ from agent import agent
 from groq import BadRequestError
 import time
 import uuid
+import streamlit as st
+import os
 
+# Bridge Streamlit secrets into environment variables (for Streamlit Cloud)
+for key in ["GROQ_API_KEY", "LANGSMITH_TRACING", "LANGSMITH_API_KEY", "LANGSMITH_PROJECT"]:
+    if key in st.secrets:
+        os.environ[key] = st.secrets[key]
+
+from agent import agent
+from groq import BadRequestError
+import time
+import uuid
 st.set_page_config(page_title="Agentic Research Assistant", page_icon="🔎", layout="centered")
 
 st.title("🔎 Agentic Research Assistant")
