@@ -1,9 +1,4 @@
 import streamlit as st
-from agent import agent
-from groq import BadRequestError
-import time
-import uuid
-import streamlit as st
 import os
 
 # Bridge Streamlit secrets into environment variables (for Streamlit Cloud)
@@ -12,9 +7,10 @@ for key in ["GROQ_API_KEY", "LANGSMITH_TRACING", "LANGSMITH_API_KEY", "LANGSMITH
         os.environ[key] = st.secrets[key]
 
 from agent import agent
-from groq import BadRequestError
+from groq import BadRequestError, APIError
 import time
 import uuid
+
 st.set_page_config(page_title="Agentic Research Assistant", page_icon="🔎", layout="centered")
 
 st.title("🔎 Agentic Research Assistant")
@@ -46,15 +42,19 @@ if user_input:
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = None
-            for attempt in range(3):
+            last_error = None
+            for attempt in range(5):
                 try:
                     result = agent.invoke({"messages": [("user", user_input)]}, config)
                     response = result["messages"][-1].content
                     break
-                except BadRequestError:
+                except (BadRequestError, APIError) as e:
+                    last_error = e
                     time.sleep(1)
             if response is None:
                 response = "Sorry, I had trouble processing that. Could you rephrase?"
+                if last_error:
+                    st.caption(f"(Debug: {type(last_error).__name__} - {last_error})")
 
             st.markdown(response)
 
